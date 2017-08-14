@@ -1,0 +1,33 @@
+{
+	"name": "@kaoscript/source-writer",
+	"description": "Helpers to write source code.",
+	"version": "0.1.0",
+	"author": {
+		"name": "Baptiste Augrain",
+		"email": "daiyam@zokugun.org"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/kaoscript/source-writer"
+	},
+	"bugs": {
+		"url": "https://github.com/kaoscript/source-writer/issues"
+	},
+	"license": "MIT",
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://www.opensource.org/licenses/mit-license.php"
+		}
+	],
+	"engines": {
+		"node": ">= 4.0.0"
+	},
+	"files": [
+		"src"
+	],
+	"main": "src/writer.ks",
+	"dependencies": {
+		"@kaoscript/util": "kaoscript/util#v0.1.0"
+	}
+}
