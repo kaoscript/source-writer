@@ -23,7 +23,6 @@ export {
 			_fragments: Array	= []
 			_indent: Number
 			_options: Object
-			_terminator
 		}
 		public {
 			Array: class
@@ -33,6 +32,9 @@ export {
 			Fragment: class
 			Line: class
 			Object: class
+			
+			lineTerminator: Fragment
+			listTerminator: Fragment
 		}
 		constructor(options) { // {{{
 			@options = Object.merge({
@@ -41,7 +43,10 @@ export {
 					style: 'tab'
 					size: 4
 				}
-				terminator: ';\n'
+				terminators: {
+					line: ';'
+					list: ','
+				}
 				classes: {
 					array: ArrayWriter
 					block: BlockWriter
@@ -63,7 +68,8 @@ export {
 			@Line = @options.classes.line
 			@Object = @options.classes.object
 			
-			@terminator = this.newFragment(@options.terminator)
+			@lineTerminator = this.newFragment(`\(@options.terminators.line)\n`)
+			@listTerminator = this.newFragment(`\(@options.terminators.list)\n`)
 		} // }}}
 		line(...args) { // {{{
 			this.newLine(@indent).code(...args).done()
@@ -169,7 +175,7 @@ export {
 			if @line != null {
 				@line.done()
 				
-				@writer.push(@writer.newFragment(',\n'))
+				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
@@ -332,11 +338,12 @@ export {
 	class LineWriter extends ExpressionWriter {
 		done() { // {{{
 			if @undone {
-				@writer.push(@writer._terminator)
+				@writer.push(@writer.lineTerminator)
 				
 				@undone = false
 			}
 		} // }}}
+		newLine() => this
 	}
 	
 	class ObjectWriter {
@@ -374,7 +381,7 @@ export {
 			if @line != null {
 				@line.done()
 				
-				@writer.push(@writer.newFragment(',\n'))
+				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
@@ -386,7 +393,7 @@ export {
 			if @line != null {
 				@line.done()
 				
-				@writer.push(@writer.newFragment(',\n'))
+				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
