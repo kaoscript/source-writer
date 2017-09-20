@@ -7,7 +7,7 @@
  * Licensed under the MIT license.
  * http://www.opensource.org/licenses/mit-license.php
  **/
-include once '@kaoscript/util'
+include '@kaoscript/util'
 
 export {
 	class Writer {
@@ -15,6 +15,7 @@ export {
 			_cache				= {
 				array:			{}
 				block:			{}
+				comment:		{}
 				expression: 	{}
 				indent:			{}
 				line:			{}
@@ -27,12 +28,15 @@ export {
 		public {
 			Array: class
 			Block: class
+			Comment: class
 			Control: class
 			Expression: class
 			Fragment: class
 			Line: class
+			Mark: class
 			Object: class
 			
+			breakTerminator: Fragment
 			lineTerminator: Fragment
 			listTerminator: Fragment
 		}
@@ -50,10 +54,12 @@ export {
 				classes: {
 					array: ArrayWriter
 					block: BlockWriter
+					comment: CommentWriter
 					control: ControlWriter
 					expression: ExpressionWriter
 					fragment: Fragment
 					line: LineWriter
+					mark: MarkWriter
 					object: ObjectWriter
 				}
 			}, options)
@@ -62,20 +68,36 @@ export {
 			
 			@Array = @options.classes.array
 			@Block = @options.classes.block
+			@Comment = @options.classes.comment
 			@Control = @options.classes.control
 			@Expression = @options.classes.expression
 			@Fragment = @options.classes.fragment
 			@Line = @options.classes.line
+			@Mark = @options.classes.mark
 			@Object = @options.classes.object
 			
+			@breakTerminator = this.newFragment(`\n`)
 			@lineTerminator = this.newFragment(`\(@options.terminators.line)\n`)
 			@listTerminator = this.newFragment(`\(@options.terminators.list)\n`)
+		} // }}}
+		comment(...args) { // {{{
+			this.newComment(@indent).code(...args).done()
+			
+			return this
+		} // }}}
+		insertAt(index, ...args) { // {{{
+			const l = @fragments.length
+			
+			@fragments.splice(index, 0, ...args)
+			
+			return @fragments.length - l
 		} // }}}
 		line(...args) { // {{{
 			this.newLine(@indent).code(...args).done()
 			
 			return this
 		} // }}}
+		mark() => new this.Mark(this, @indent, @fragments.length)
 		newArray(indent = @indent) { // {{{
 			@cache.array[indent] ??= new this.Array(this, indent)
 		
@@ -85,6 +107,11 @@ export {
 			@cache.block[indent] ??= new this.Block(this, indent)
 		
 			return @cache.block[indent].init()
+		} // }}}
+		newComment(indent = @indent) { // {{{
+			@cache.comment[indent] ??= new this.Comment(this, indent)
+		
+			return @cache.comment[indent].init()
 		} // }}}
 		newControl(indent = @indent, addFinalNewLine = true) { // {{{
 			return new this.Control(this, indent, addFinalNewLine)
@@ -130,7 +157,7 @@ export {
 	
 	class ArrayWriter {
 		private {
-			_writer: Writer
+			_writer
 			_indent: Number
 			_line	= null
 		}
@@ -187,7 +214,7 @@ export {
 	
 	class BlockWriter {
 		private {
-			_writer: Writer
+			_writer
 			_indent: Number
 			_undone: Boolean	= true
 		}
@@ -227,7 +254,7 @@ export {
 	class ControlWriter {
 		private {
 			_addFinalNewLine: Boolean
-			_writer: Writer
+			_writer
 			_firstStep: Boolean			= true
 			_indent: Number
 			_step
@@ -242,7 +269,7 @@ export {
 		} // }}}
 		done() { // {{{
 			if @step.done() && @addFinalNewLine {
-				@writer.push(@writer.newFragment('\n'))
+				@writer.push(@writer.breakTerminator)
 			}
 		} // }}}
 		isFirstStep() => @firstStep
@@ -281,7 +308,7 @@ export {
 	
 	class ExpressionWriter {
 		private {
-			_writer: Writer
+			_writer
 			_indent: Number
 			_undone: Boolean	= true
 		}
@@ -335,6 +362,17 @@ export {
 		} // }}}
 	}
 	
+	class CommentWriter extends ExpressionWriter {
+		done() { // {{{
+			if @undone {
+				@writer.push(@writer.breakTerminator)
+				
+				@undone = false
+			}
+		} // }}}
+		newLine() => this
+	}
+	
 	class LineWriter extends ExpressionWriter {
 		done() { // {{{
 			if @undone {
@@ -348,7 +386,7 @@ export {
 	
 	class ObjectWriter {
 		private {
-			_writer: Writer
+			_writer
 			_indent: Number
 			_line				= null
 		}
@@ -400,6 +438,37 @@ export {
 			}
 			
 			return @line = @writer.newExpression(@indent + 1)
+		} // }}}
+	}
+	
+	class MarkWriter {
+		private {
+			_writer
+			_indent: Number
+			_index: Number
+		}
+		public {
+			breakTerminator: Fragment
+			lineTerminator: Fragment
+			listTerminator: Fragment
+		}
+		constructor(@writer, @indent, @index) { // {{{
+			@breakTerminator = @writer.breakTerminator
+			@lineTerminator = @writer.lineTerminator
+			@listTerminator = @writer.listTerminator
+		} // }}}
+		line(...args) { // {{{
+			this.newLine().code(...args).done()
+			
+			return this
+		} // }}}
+		newControl() => new this._writer.Control(this, @indent)
+		newFragment(...args) => @writer.newFragment(...args)
+		newLine() => new this._writer.Line(this, @indent)
+		push(...args) { // {{{
+			@index += @writer.insertAt(@index, ...args)
+			
+			return this
 		} // }}}
 	}
 }
