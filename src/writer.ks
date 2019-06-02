@@ -16,6 +16,7 @@ export {
 				array:			{}
 				block:			{}
 				comment:		{}
+				control:		{}
 				expression: 	{}
 				indent:			{}
 				line:			{}
@@ -35,7 +36,7 @@ export {
 			Line: class
 			Mark: class
 			Object: class
-			
+
 			breakTerminator: Fragment
 			lineTerminator: Fragment
 			listTerminator: Fragment
@@ -63,9 +64,9 @@ export {
 					object: ObjectWriter
 				}
 			}, options)
-			
+
 			@indent = @options.indent.level
-			
+
 			@Array = @options.classes.array
 			@Block = @options.classes.block
 			@Comment = @options.classes.comment
@@ -75,50 +76,56 @@ export {
 			@Line = @options.classes.line
 			@Mark = @options.classes.mark
 			@Object = @options.classes.object
-			
+
 			@breakTerminator = this.newFragment(`\n`)
 			@lineTerminator = this.newFragment(`\(@options.terminators.line)\n`)
 			@listTerminator = this.newFragment(`\(@options.terminators.list)\n`)
 		} // }}}
 		comment(...args) { // {{{
 			this.newComment(@indent).code(...args).done()
-			
+
 			return this
 		} // }}}
 		insertAt(index, ...args) { // {{{
 			const l = @fragments.length
-			
+
 			@fragments.splice(index, 0, ...args)
-			
+
 			return @fragments.length - l
 		} // }}}
 		line(...args) { // {{{
 			this.newLine(@indent).code(...args).done()
-			
+
 			return this
 		} // }}}
 		mark() => new this.Mark(this, @indent, @fragments.length)
 		newArray(indent = @indent) { // {{{
 			@cache.array[indent] ??= new this.Array(this, indent)
-		
+
 			return @cache.array[indent].init()
 		} // }}}
-		newBlock(indent = @indent) { // {{{
-			@cache.block[indent] ??= new this.Block(this, indent)
-		
-			return @cache.block[indent].init()
+		newBlock(indent = @indent, breakable = false) { // {{{
+			const key = `\(indent)|\(breakable)`
+
+			@cache.block[key] ??= new this.Block(this, indent, breakable)
+
+			return @cache.block[key].init()
 		} // }}}
 		newComment(indent = @indent) { // {{{
 			@cache.comment[indent] ??= new this.Comment(this, indent)
-		
+
 			return @cache.comment[indent].init()
 		} // }}}
-		newControl(indent = @indent, addFinalNewLine = true) { // {{{
-			return new this.Control(this, indent, addFinalNewLine)
+		newControl(indent = @indent, breakable = true) { // {{{
+			const key = `\(indent)|\(breakable)`
+
+			@cache.control[key] ??= new this.Control(this, indent, breakable)
+
+			return @cache.control[key].init()
 		} // }}}
 		newExpression(indent = @indent) { // {{{
 			@cache.expression[indent] ??= new this.Expression(this, indent)
-		
+
 			return @cache.expression[indent].init()
 		} // }}}
 		newFragment(...args) { // {{{
@@ -129,22 +136,22 @@ export {
 		} // }}}
 		newLine(indent = @indent) { // {{{
 			@cache.line[indent] ??= new this.Line(this, indent)
-		
+
 			return @cache.line[indent].init()
 		} // }}}
 		newObject(indent = @indent) { // {{{
 			@cache.object[indent] ??= new this.Object(this, indent)
-		
+
 			return @cache.object[indent].init()
 		} // }}}
 		push(...args) { // {{{
 			@fragments.push(...args)
-			
+
 			return this
 		} // }}}
 		toArray() => @fragments
 	}
-	
+
 	class Fragment {
 		public {
 			code
@@ -154,20 +161,20 @@ export {
 			return @code
 		} // }}}
 	}
-	
+
 	class ArrayWriter {
 		private {
-			_writer
 			_indent: Number
-			_line	= null
+			_line				= null
+			_writer
 		}
 		constructor(@writer, @indent)
 		done() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@line = null
-				
+
 				@writer.push(@writer.newFragment('\n'), @writer.newIndent(@indent), @writer.newFragment(']'))
 			}
 			else {
@@ -176,55 +183,60 @@ export {
 		} // }}}
 		private init() { // {{{
 			@line = null
-			
+
 			@writer.push(@writer.newFragment('['))
-			
+
 			return this
 		} // }}}
 		line(...args) { // {{{
 			this.newLine().code(...args)
-			
+
 			return this
 		} // }}}
 		newControl() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@writer.push(@writer.newFragment(',\n'))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
 			}
-			
+
 			return @line = @writer.newControl(@indent + 1, false)
 		} // }}}
 		newLine() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
 			}
-			
+
 			return @line = @writer.newExpression(@indent + 1)
 		} // }}}
 	}
-	
+
 	class BlockWriter {
 		private {
-			_writer
+			_breakable: Boolean
 			_indent: Number
-			_undone: Boolean	= true
+			_undone: Boolean		= true
+			_writer
 		}
-		constructor(@writer, @indent)
+		constructor(@writer, @indent, @breakable = false)
 		done() { // {{{
 			if @undone {
 				@writer.push(@writer.newIndent(@indent), @writer.newFragment('}'))
-				
+
+				if @breakable {
+					@writer.push(@writer.breakTerminator)
+				}
+
 				@undone = false
-				
+
 				return true
 			}
 			else {
@@ -232,16 +244,24 @@ export {
 			}
 		} // }}}
 		private init() { // {{{
-			@writer.push(@writer.newFragment(' {\n'))
-			
+			if @breakable {
+				@writer.push(@writer.newIndent(@indent), @writer.newFragment('{\n'))
+			}
+			else {
+				@writer.push(@writer.newFragment(' {\n'))
+			}
+
 			@undone = true
-			
+
 			return this
 		} // }}}
 		line(...args) { // {{{
 			@writer.newLine(@indent + 1).code(...args).done()
-			
+
 			return this
+		} // }}}
+		newBlock(indent = @indent + 1) { // {{{
+			return @writer.newBlock(indent, true)
 		} // }}}
 		newControl(indent = @indent + 1) { // {{{
 			return @writer.newControl(indent)
@@ -250,32 +270,37 @@ export {
 			return @writer.newLine(indent)
 		} // }}}
 	}
-	
+
 	class ControlWriter {
 		private {
-			_addFinalNewLine: Boolean
-			_writer
+			_breakable: Boolean
 			_firstStep: Boolean			= true
 			_indent: Number
 			_step
+			_writer
 		}
-		constructor(@writer, @indent, @addFinalNewLine = true) { // {{{
-			@step = @writer.newExpression(@indent)
-		} // }}}
+		constructor(@writer, @indent, @breakable = true)
 		code(...args) { // {{{
 			@step.code(...args)
-			
+
 			return this
 		} // }}}
 		done() { // {{{
-			if @step.done() && @addFinalNewLine {
+			if @step.done() && @breakable {
 				@writer.push(@writer.breakTerminator)
 			}
 		} // }}}
 		isFirstStep() => @firstStep
+		private init() { // {{{
+			@step = @writer.newExpression(@indent)
+
+			@firstStep = true
+
+			return this
+		} // }}}
 		line(...args) { // {{{
 			@step.line(...args)
-			
+
 			return this
 		} // }}}
 		newControl() { // {{{
@@ -286,31 +311,31 @@ export {
 		} // }}}
 		step() { // {{{
 			@step.done()
-			
+
 			if @step is ExpressionWriter {
 				@step = @writer.newBlock(@indent)
 			}
 			else {
-				if @addFinalNewLine {
+				if @breakable {
 					@writer.push(@writer.newFragment('\n'))
 				}
-				
+
 				@step = @writer.newExpression(@indent)
 			}
-			
+
 			if @firstStep {
 				@firstStep = false
 			}
-			
+
 			return this
 		} // }}}
 	}
-	
+
 	class ExpressionWriter {
 		private {
-			_writer
 			_indent: Number
 			_undone: Boolean	= true
+			_writer
 		}
 		constructor(@writer, @indent)
 		code(...args) { // {{{
@@ -325,13 +350,13 @@ export {
 					@writer.push(@writer.newFragment(arg))
 				}
 			}
-			
+
 			return this
 		} // }}}
 		done() { // {{{
 			if @undone {
 				@undone = false
-				
+
 				return true
 			}
 			else {
@@ -340,9 +365,9 @@ export {
 		} // }}}
 		private init() { // {{{
 			@writer.push(@writer.newIndent(@indent))
-			
+
 			@undone = true
-			
+
 			return this
 		} // }}}
 		newArray(indent = @indent) { // {{{
@@ -361,42 +386,42 @@ export {
 			return @writer.newObject(indent)
 		} // }}}
 	}
-	
+
 	class CommentWriter extends ExpressionWriter {
 		done() { // {{{
 			if @undone {
 				@writer.push(@writer.breakTerminator)
-				
+
 				@undone = false
 			}
 		} // }}}
 		newLine() => this
 	}
-	
+
 	class LineWriter extends ExpressionWriter {
 		done() { // {{{
 			if @undone {
 				@writer.push(@writer.lineTerminator)
-				
+
 				@undone = false
 			}
 		} // }}}
 		newLine() => this
 	}
-	
+
 	class ObjectWriter {
 		private {
-			_writer
 			_indent: Number
 			_line				= null
+			_writer
 		}
 		constructor(@writer, @indent)
 		done() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@line = null
-				
+
 				@writer.push(@writer.newFragment('\n'), @writer.newIndent(@indent), @writer.newFragment('}'))
 			}
 			else {
@@ -405,47 +430,47 @@ export {
 		} // }}}
 		private init() { // {{{
 			@line = null
-			
+
 			@writer.push(@writer.newFragment('{'))
-			
+
 			return this
 		} // }}}
 		line(...args) { // {{{
 			this.newLine().code(...args)
-			
+
 			return this
 		} // }}}
 		newControl() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
 			}
-			
+
 			return @line = @writer.newControl(@indent + 1, false)
 		} // }}}
 		newLine() { // {{{
 			if @line != null {
 				@line.done()
-				
+
 				@writer.push(@writer.newFragment(@writer.listTerminator))
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
 			}
-			
+
 			return @line = @writer.newExpression(@indent + 1)
 		} // }}}
 	}
-	
+
 	class MarkWriter {
 		private {
-			_writer
 			_indent: Number
 			_index: Number
+			_writer
 		}
 		public {
 			breakTerminator: Fragment
@@ -459,7 +484,7 @@ export {
 		} // }}}
 		line(...args) { // {{{
 			this.newLine().code(...args).done()
-			
+
 			return this
 		} // }}}
 		newControl() => new this._writer.Control(this, @indent)
@@ -467,7 +492,7 @@ export {
 		newLine() => new this._writer.Line(this, @indent)
 		push(...args) { // {{{
 			@index += @writer.insertAt(@index, ...args)
-			
+
 			return this
 		} // }}}
 	}
