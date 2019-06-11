@@ -28,6 +28,6 @@
 	],
 	"main": "src/writer.ks",
 	"dependencies": {
-		"@kaoscript/util": "^0.1.0"
+		"@kaoscript/util": "github:kaoscript/util"
 	}
 }
