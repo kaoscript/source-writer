@@ -1,6 +1,6 @@
 /**
  * writer.ks
- * Version 0.1.0
+ * Version 0.2.0
  * August 3rd, 2017
  *
  * Copyright (c) 2017 Baptiste Augrain
