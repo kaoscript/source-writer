@@ -41,7 +41,7 @@ export {
 			lineTerminator: Fragment
 			listTerminator: Fragment
 		}
-		constructor(options) { // {{{
+		constructor(options = {}) { // {{{
 			@options = Object.merge({
 				indent: {
 					level: 0
