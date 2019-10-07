@@ -24,7 +24,7 @@ export {
 			}
 			_fragments: Array	= []
 			_indent: Number
-			_options: Object
+			_options: Dictionary
 		}
 		public {
 			Array: class
@@ -42,7 +42,7 @@ export {
 			listTerminator: Fragment
 		}
 		constructor(options = {}) { // {{{
-			@options = Object.merge({
+			@options = Dictionary.merge({
 				indent: {
 					level: 0
 					style: 'tab'
@@ -343,7 +343,7 @@ export {
 				if arg is Array {
 					this.code(...arg)
 				}
-				else if arg is Object {
+				else if arg is Dictionary {
 					@writer.push(arg)
 				}
 				else {
