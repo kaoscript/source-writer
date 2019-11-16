@@ -116,17 +116,19 @@ export {
 
 			return @cache.comment[indent].init()
 		} // }}}
-		newControl(indent = @indent, breakable = true) { // {{{
-			const key = `\(indent)|\(breakable)`
+		newControl(indent = @indent, initiator = true, terminator = true) { // {{{
+			const key = `\(indent)|\(initiator)|\(terminator)`
 
-			@cache.control[key] ??= new this.Control(this, indent, breakable)
+			@cache.control[key] ??= new this.Control(this, indent, initiator, terminator)
 
 			return @cache.control[key].init()
 		} // }}}
-		newExpression(indent = @indent) { // {{{
-			@cache.expression[indent] ??= new this.Expression(this, indent)
+		newExpression(indent = @indent, initiator = true) { // {{{
+			const key = `\(indent)|\(initiator)`
 
-			return @cache.expression[indent].init()
+			@cache.expression[key] ??= new this.Expression(this, indent, initiator)
+
+			return @cache.expression[key].init()
 		} // }}}
 		newFragment(...args) { // {{{
 			return new this.Fragment(...args)
@@ -263,8 +265,8 @@ export {
 		newBlock(indent = @indent + 1) { // {{{
 			return @writer.newBlock(indent, true)
 		} // }}}
-		newControl(indent = @indent + 1) { // {{{
-			return @writer.newControl(indent)
+		newControl(indent = @indent + 1, initiator = true, terminator = true) { // {{{
+			return @writer.newControl(indent, initiator, terminator)
 		} // }}}
 		newLine(indent = @indent + 1) { // {{{
 			return @writer.newLine(indent)
@@ -273,26 +275,27 @@ export {
 
 	class ControlWriter {
 		private {
-			_breakable: Boolean
 			_firstStep: Boolean			= true
 			_indent: Number
+			_initiator: Boolean
 			_step
+			_terminator: Boolean
 			_writer
 		}
-		constructor(@writer, @indent, @breakable = true)
+		constructor(@writer, @indent, @initiator = true, @terminator = true)
 		code(...args) { // {{{
 			@step.code(...args)
 
 			return this
 		} // }}}
 		done() { // {{{
-			if @step.done() && @breakable {
+			if @step.done() && @terminator {
 				@writer.push(@writer.breakTerminator)
 			}
 		} // }}}
 		isFirstStep() => @firstStep
 		private init() { // {{{
-			@step = @writer.newExpression(@indent)
+			@step = @writer.newExpression(@indent, @initiator)
 
 			@firstStep = true
 
@@ -316,7 +319,7 @@ export {
 				@step = @writer.newBlock(@indent)
 			}
 			else {
-				if @breakable {
+				if @terminator {
 					@writer.push(@writer.newFragment('\n'))
 				}
 
@@ -334,10 +337,11 @@ export {
 	class ExpressionWriter {
 		private {
 			_indent: Number
+			_initiator: Boolean
 			_undone: Boolean	= true
 			_writer
 		}
-		constructor(@writer, @indent)
+		constructor(@writer, @indent, @initiator = true)
 		code(...args) { // {{{
 			for arg in args {
 				if arg is Array {
@@ -364,7 +368,9 @@ export {
 			}
 		} // }}}
 		private init() { // {{{
-			@writer.push(@writer.newIndent(@indent))
+			if @initiator {
+				@writer.push(@writer.newIndent(@indent))
+			}
 
 			@undone = true
 
@@ -376,8 +382,8 @@ export {
 		newBlock(indent = @indent) { // {{{
 			return @writer.newBlock(indent)
 		} // }}}
-		newControl(indent = @indent + 1) { // {{{
-			return @writer.newControl(indent)
+		newControl(indent = @indent + 1, initiator = true, terminator = true) { // {{{
+			return @writer.newControl(indent, initiator, terminator)
 		} // }}}
 		newLine(indent = @indent + 1) { // {{{
 			return @writer.newLine(indent)
@@ -405,6 +411,9 @@ export {
 
 				@undone = false
 			}
+		} // }}}
+		newControl(indent = @indent, initiator = true, terminator = true) { // {{{
+			return @writer.newControl(indent, initiator, terminator)
 		} // }}}
 		newLine() => this
 	}
@@ -450,7 +459,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line = @writer.newControl(@indent + 1, false)
+			return @line = @writer.newControl(@indent + 1, true, false)
 		} // }}}
 		newLine() { // {{{
 			if @line != null {
