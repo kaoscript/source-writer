@@ -93,12 +93,13 @@ export {
 
 			return @fragments.length - l
 		} // }}}
+		length() => @fragments.length
 		line(...args) { // {{{
 			this.newLine(@indent).code(...args).done()
 
 			return this
 		} // }}}
-		mark() => new this.Mark(this, @indent, @fragments.length)
+		mark(indent = @indent) => new this.Mark(this, indent, @fragments.length)
 		newArray(indent = @indent) { // {{{
 			@cache.array[indent] ??= new this.Array(this, indent)
 
@@ -257,11 +258,13 @@ export {
 
 			return this
 		} // }}}
+		length() => @writer.length()
 		line(...args) { // {{{
 			@writer.newLine(@indent + 1).code(...args).done()
 
 			return this
 		} // }}}
+		mark(indent = @indent + 1) => @writer.mark(indent)
 		newBlock(indent = @indent + 1) { // {{{
 			return @writer.newBlock(indent, true)
 		} // }}}
@@ -477,8 +480,11 @@ export {
 
 	class MarkWriter {
 		private {
+			_delta: Number		= 0
 			_indent: Number
-			_index: Number
+			_index: Number		= -1
+			_mark: MarkWriter	= null
+			_relative: Boolean	= false
 			_writer
 		}
 		public {
@@ -486,21 +492,44 @@ export {
 			lineTerminator: Fragment
 			listTerminator: Fragment
 		}
-		constructor(@writer, @indent, @index) { // {{{
+		private constructor(@writer, @indent) { // {{{
 			@breakTerminator = @writer.breakTerminator
 			@lineTerminator = @writer.lineTerminator
 			@listTerminator = @writer.listTerminator
+		} // }}}
+		constructor(@writer, @indent, @index) { // {{{
+			this(writer, indent)
+		} // }}}
+		constructor(@mark) { // {{{
+			this(mark._writer, mark._indent)
+
+			@relative = true
+		} // }}}
+		index() { // {{{
+			if @relative {
+				return @mark.index() + @delta
+			}
+			else {
+				return @index
+			}
 		} // }}}
 		line(...args) { // {{{
 			this.newLine().code(...args).done()
 
 			return this
 		} // }}}
-		newControl() => new this._writer.Control(this, @indent)
+		mark() => new MarkWriter(this)
+		newControl() => new @writer.Control(this, @indent).init()
 		newFragment(...args) => @writer.newFragment(...args)
-		newLine() => new this._writer.Line(this, @indent)
+		newIndent(indent) => @writer.newIndent(indent)
+		newLine() => new @writer.Line(this, @indent).init()
 		push(...args) { // {{{
-			@index += @writer.insertAt(@index, ...args)
+			if @relative {
+				@delta += @writer.insertAt(this.index(), ...args)
+			}
+			else {
+				@index += @writer.insertAt(@index, ...args)
+			}
 
 			return this
 		} // }}}
