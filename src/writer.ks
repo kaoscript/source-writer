@@ -87,7 +87,7 @@ export {
 			return this
 		} // }}}
 		insertAt(index, ...args) { // {{{
-			const l = @fragments.length
+			var l = @fragments.length
 
 			@fragments.splice(index, 0, ...args)
 
@@ -106,7 +106,7 @@ export {
 			return @cache.array[indent].init()
 		} // }}}
 		newBlock(indent = @indent, breakable = false) { // {{{
-			const key = `\(indent)|\(breakable)`
+			var key = `\(indent)|\(breakable)`
 
 			@cache.block[key] ??= new this.Block(this, indent, breakable)
 
@@ -118,14 +118,14 @@ export {
 			return @cache.comment[indent].init()
 		} // }}}
 		newControl(indent = @indent, initiator = true, terminator = true) { // {{{
-			const key = `\(indent)|\(initiator)|\(terminator)`
+			var key = `\(indent)|\(initiator)|\(terminator)`
 
 			@cache.control[key] ??= new this.Control(this, indent, initiator, terminator)
 
 			return @cache.control[key].init()
 		} // }}}
 		newExpression(indent = @indent, initiator = true) { // {{{
-			const key = `\(indent)|\(initiator)`
+			var key = `\(indent)|\(initiator)`
 
 			@cache.expression[key] ??= new this.Expression(this, indent, initiator)
 
@@ -507,7 +507,7 @@ export {
 		} // }}}
 		index() { // {{{
 			if @relative {
-				return @mark.index() + @delta
+				return @mark!?.index() + @delta
 			}
 			else {
 				return @index
