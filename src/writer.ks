@@ -124,10 +124,10 @@ export {
 
 			return @cache.control[key].init()
 		} // }}}
-		newExpression(indent = @indent, initiator = true) { // {{{
-			var key = `\(indent)|\(initiator)`
+		newExpression(indent = @indent, initiator = true, terminator = true) { // {{{
+			var key = `\(indent)|\(initiator)|\(terminator)`
 
-			@cache.expression[key] ??= new this.Expression(this, indent, initiator)
+			@cache.expression[key] ??= new this.Expression(this, indent, initiator, terminator)
 
 			return @cache.expression[key].init()
 		} // }}}
@@ -137,10 +137,12 @@ export {
 		newIndent(indent) { // {{{
 			return @cache.indent[indent] ?? (@cache.indent[indent] = new this.Fragment('\t'.repeat(indent)))
 		} // }}}
-		newLine(indent = @indent) { // {{{
-			@cache.line[indent] ??= new this.Line(this, indent)
+		newLine(indent = @indent, initiator = true, terminator = true) { // {{{
+			var key = `\(indent)|\(initiator)|\(terminator)`
 
-			return @cache.line[indent].init()
+			@cache.line[key] ??= new this.Line(this, indent, initiator, terminator)
+
+			return @cache.line[key].init()
 		} // }}}
 		newObject(indent = @indent) { // {{{
 			@cache.object[indent] ??= new this.Object(this, indent)
@@ -226,19 +228,19 @@ export {
 		private {
 			_breakable: Boolean
 			_indent: Number
-			_undone: Boolean		= true
+			_notDone: Boolean		= true
 			_writer
 		}
 		constructor(@writer, @indent, @breakable = false)
 		done() { // {{{
-			if @undone {
+			if @notDone {
 				@writer.push(@writer.newIndent(@indent), @writer.newFragment('}'))
 
 				if @breakable {
 					@writer.push(@writer.breakTerminator)
 				}
 
-				@undone = false
+				@notDone = false
 
 				return true
 			}
@@ -254,7 +256,7 @@ export {
 				@writer.push(@writer.newFragment(' {\n'))
 			}
 
-			@undone = true
+			@notDone = true
 
 			return this
 		} // }}}
@@ -271,8 +273,8 @@ export {
 		newControl(indent = @indent + 1, initiator = true, terminator = true) { // {{{
 			return @writer.newControl(indent, initiator, terminator)
 		} // }}}
-		newLine(indent = @indent + 1) { // {{{
-			return @writer.newLine(indent)
+		newLine(indent = @indent + 1, initiator = true, terminator = true) { // {{{
+			return @writer.newLine(indent, initiator, terminator)
 		} // }}}
 	}
 
@@ -341,10 +343,11 @@ export {
 		private {
 			_indent: Number
 			_initiator: Boolean
-			_undone: Boolean	= true
+			_terminator: Boolean
+			_notDone: Boolean	= true
 			_writer
 		}
-		constructor(@writer, @indent, @initiator = true)
+		constructor(@writer, @indent, @initiator = true, @terminator = true)
 		code(...args) { // {{{
 			for arg in args {
 				if arg is Array {
@@ -361,8 +364,8 @@ export {
 			return this
 		} // }}}
 		done() { // {{{
-			if @undone {
-				@undone = false
+			if @notDone {
+				@notDone = false
 
 				return true
 			}
@@ -375,7 +378,7 @@ export {
 				@writer.push(@writer.newIndent(@indent))
 			}
 
-			@undone = true
+			@notDone = true
 
 			return this
 		} // }}}
@@ -398,10 +401,10 @@ export {
 
 	class CommentWriter extends ExpressionWriter {
 		done() { // {{{
-			if @undone {
+			if @notDone {
 				@writer.push(@writer.breakTerminator)
 
-				@undone = false
+				@notDone = false
 			}
 		} // }}}
 		newLine() => this
@@ -409,10 +412,12 @@ export {
 
 	class LineWriter extends ExpressionWriter {
 		done() { // {{{
-			if @undone {
-				@writer.push(@writer.lineTerminator)
+			if @notDone {
+				if @terminator {
+					@writer.push(@writer.lineTerminator)
+				}
 
-				@undone = false
+				@notDone = false
 			}
 		} // }}}
 		newControl(indent = @indent, initiator = true, terminator = true) { // {{{
