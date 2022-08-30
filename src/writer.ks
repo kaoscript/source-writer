@@ -135,7 +135,7 @@ export {
 			return new this.Fragment(...args)
 		} // }}}
 		newIndent(indent) { // {{{
-			return @cache.indent[indent] ?? (@cache.indent[indent] = new this.Fragment('\t'.repeat(indent)))
+			return @cache.indent[indent] ?? (@cache.indent[indent] <- new this.Fragment('\t'.repeat(indent)))
 		} // }}}
 		newLine(indent = @indent, initiator = true, terminator = true) { // {{{
 			var key = `\(indent)|\(initiator)|\(terminator)`
@@ -208,7 +208,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line = @writer.newControl(@indent + 1, false)
+			return @line <- @writer.newControl(@indent + 1, false)
 		} // }}}
 		newLine() { // {{{
 			if @line != null {
@@ -220,7 +220,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line = @writer.newExpression(@indent + 1)
+			return @line <- @writer.newExpression(@indent + 1)
 		} // }}}
 	}
 
@@ -467,7 +467,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line = @writer.newControl(@indent + 1, true, false)
+			return @line <- @writer.newControl(@indent + 1, true, false)
 		} // }}}
 		newLine() { // {{{
 			if @line != null {
@@ -479,7 +479,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line = @writer.newExpression(@indent + 1)
+			return @line <- @writer.newExpression(@indent + 1)
 		} // }}}
 	}
 
@@ -488,7 +488,7 @@ export {
 			_delta: Number		= 0
 			_indent: Number
 			_index: Number		= -1
-			_mark: MarkWriter	= null
+			_mark: MarkWriter?	= null
 			_relative: Boolean	= false
 			_writer
 		}
