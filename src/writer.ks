@@ -391,6 +391,9 @@ export {
 		newControl(indent = @indent + 1, initiator = true, terminator = true) { // {{{
 			return @writer.newControl(indent, initiator, terminator)
 		} // }}}
+		newIndent(indent = @indent + 1): this { # {{{
+			@writer.push(@writer.newIndent(indent))
+		} # }}}
 		newLine(indent = @indent + 1) { // {{{
 			return @writer.newLine(indent)
 		} // }}}
