@@ -156,6 +156,9 @@ export {
 			code: String
 		}
 		constructor(@code)
+		constructor(code: Boolean | Number) { # {{{
+			@code = `\(code)`
+		} # }}}
 		toString(): String { # {{{
 			return @code
 		} # }}}
@@ -204,7 +207,7 @@ export {
 			if @line != null {
 				@line.done()
 
-				@writer.push(@writer.newFragment(@writer.listTerminator))
+				@writer.push(@writer.listTerminator)
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
@@ -434,7 +437,7 @@ export {
 			if @line != null {
 				@line.done()
 
-				@writer.push(@writer.newFragment(@writer.listTerminator))
+				@writer.push(@writer.listTerminator)
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
@@ -446,7 +449,7 @@ export {
 			if @line != null {
 				@line.done()
 
-				@writer.push(@writer.newFragment(@writer.listTerminator))
+				@writer.push(@writer.listTerminator)
 			}
 			else {
 				@writer.push(@writer.newFragment('\n'))
