@@ -12,19 +12,19 @@ include '@kaoscript/util'
 export {
 	class Writer {
 		private {
-			_cache				= {
-				array:			{}
-				block:			{}
-				comment:		{}
-				control:		{}
-				expression: 	{}
-				indent:			{}
-				line:			{}
-				object:			{}
+			@cache					= {
+				array:				{}
+				block:				{}
+				comment:			{}
+				control:			{}
+				expression: 		{}
+				indent:				{}
+				line:				{}
+				object:				{}
 			}
-			_fragments: Array	= []
-			_indent: Number
-			_options: Object
+			@fragments: Fragment[]	= []
+			@indent: Number
+			@options: Object
 		}
 		public {
 			Array: class
@@ -81,23 +81,19 @@ export {
 			@lineTerminator = this.newFragment(`\(@options.terminators.line)\n`)
 			@listTerminator = this.newFragment(`\(@options.terminators.list)\n`)
 		} # }}}
-		comment(...args) { # {{{
+		comment(...args): this { # {{{
 			this.newComment(@indent).code(...args).done()
-
-			return this
 		} # }}}
-		insertAt(index, ...args) { # {{{
+		insertAt(index, ...args): Number { # {{{
 			var l = @fragments.length
 
 			@fragments.splice(index, 0, ...args)
 
 			return @fragments.length - l
 		} # }}}
-		length() => @fragments.length
-		line(...args) { # {{{
+		length(): Number => @fragments.length
+		line(...args): this { # {{{
 			this.newLine(@indent).code(...args).done()
-
-			return this
 		} # }}}
 		mark(indent = @indent) => new this.Mark(this, indent, @fragments.length)
 		newArray(indent = @indent) { # {{{
@@ -149,33 +145,31 @@ export {
 
 			return @cache.object[indent].init()
 		} # }}}
-		push(...args) { # {{{
+		push(...args): this { # {{{
 			@fragments.push(...args)
-
-			return this
 		} # }}}
-		toArray() => @fragments
+		toArray(): Fragment[] => @fragments
 	}
 
 	class Fragment {
 		public {
-			code
+			code: String
 		}
 		constructor(@code)
-		toString() { # {{{
+		toString(): String { # {{{
 			return @code
 		} # }}}
 	}
 
 	class ArrayWriter {
 		private {
-			_indent: Number
-			_line				= null
-			_writer
+			@indent: Number
+			@line				= null
+			@writer
 		}
 		constructor(@writer, @indent)
-		done() { # {{{
-			if @line != null {
+		done(): Void { # {{{
+			if ?@line {
 				@line.done()
 
 				@line = null
@@ -186,17 +180,13 @@ export {
 				@writer.push(@writer.newFragment(']'))
 			}
 		} # }}}
-		private init() { # {{{
+		private init(): this { # {{{
 			@line = null
 
 			@writer.push(@writer.newFragment('['))
-
-			return this
 		} # }}}
-		line(...args) { # {{{
+		line(...args): this { # {{{
 			this.newLine().code(...args)
-
-			return this
 		} # }}}
 		newControl() { # {{{
 			if @line != null {
@@ -226,10 +216,10 @@ export {
 
 	class BlockWriter {
 		private {
-			_breakable: Boolean
-			_indent: Number
-			_notDone: Boolean		= true
-			_writer
+			@breakable: Boolean
+			@indent: Number
+			@notDone: Boolean		= true
+			@writer
 		}
 		constructor(@writer, @indent, @breakable = false)
 		done() { # {{{
@@ -248,7 +238,7 @@ export {
 				return false
 			}
 		} # }}}
-		private init() { # {{{
+		private init(): this { # {{{
 			if @breakable {
 				@writer.push(@writer.newIndent(@indent), @writer.newFragment('{\n'))
 			}
@@ -257,14 +247,10 @@ export {
 			}
 
 			@notDone = true
-
-			return this
 		} # }}}
 		length() => @writer.length()
-		line(...args) { # {{{
+		line(...args): this { # {{{
 			@writer.newLine(@indent + 1).code(...args).done()
-
-			return this
 		} # }}}
 		mark(indent = @indent + 1) => @writer.mark(indent)
 		newBlock(indent = @indent + 1) { # {{{
@@ -280,18 +266,16 @@ export {
 
 	class ControlWriter {
 		private {
-			_firstStep: Boolean			= true
-			_indent: Number
-			_initiator: Boolean
-			_step
-			_terminator: Boolean
-			_writer
+			@firstStep: Boolean			= true
+			@indent: Number
+			@initiator: Boolean
+			@step
+			@terminator: Boolean
+			@writer
 		}
 		constructor(@writer, @indent, @initiator = true, @terminator = true)
-		code(...args) { # {{{
+		code(...args): this { # {{{
 			@step.code(...args)
-
-			return this
 		} # }}}
 		done() { # {{{
 			if @step.done() && @terminator {
@@ -299,17 +283,13 @@ export {
 			}
 		} # }}}
 		isFirstStep() => @firstStep
-		private init() { # {{{
+		private init(): this { # {{{
 			@step = @writer.newExpression(@indent, @initiator)
 
 			@firstStep = true
-
-			return this
 		} # }}}
-		line(...args) { # {{{
+		line(...args): this { # {{{
 			@step.line(...args)
-
-			return this
 		} # }}}
 		newControl() { # {{{
 			return @step.newControl()
@@ -317,7 +297,7 @@ export {
 		newLine() { # {{{
 			return @step.newLine()
 		} # }}}
-		step() { # {{{
+		step(): this { # {{{
 			@step.done()
 
 			if @step is ExpressionWriter {
@@ -334,21 +314,19 @@ export {
 			if @firstStep {
 				@firstStep = false
 			}
-
-			return this
 		} # }}}
 	}
 
 	class ExpressionWriter {
 		private {
-			_indent: Number
-			_initiator: Boolean
-			_terminator: Boolean
-			_notDone: Boolean	= true
-			_writer
+			@indent: Number
+			@initiator: Boolean
+			@terminator: Boolean
+			@notDone: Boolean	= true
+			@writer
 		}
 		constructor(@writer, @indent, @initiator = true, @terminator = true)
-		code(...args) { # {{{
+		code(...args): this { # {{{
 			for arg in args {
 				if arg is Array {
 					this.code(...arg)
@@ -360,8 +338,6 @@ export {
 					@writer.push(@writer.newFragment(arg))
 				}
 			}
-
-			return this
 		} # }}}
 		done() { # {{{
 			if @notDone {
@@ -373,14 +349,12 @@ export {
 				return false
 			}
 		} # }}}
-		private init() { # {{{
+		private init(): this { # {{{
 			if @initiator {
 				@writer.push(@writer.newIndent(@indent))
 			}
 
 			@notDone = true
-
-			return this
 		} # }}}
 		newArray(indent = @indent) { # {{{
 			return @writer.newArray(indent)
@@ -431,9 +405,9 @@ export {
 
 	class ObjectWriter {
 		private {
-			_indent: Number
-			_line				= null
-			_writer
+			@indent: Number
+			@line				= null
+			@writer
 		}
 		constructor(@writer, @indent)
 		done() { # {{{
@@ -448,17 +422,13 @@ export {
 				@writer.push(@writer.newFragment('}'))
 			}
 		} # }}}
-		private init() { # {{{
+		private init(): this { # {{{
 			@line = null
 
 			@writer.push(@writer.newFragment('{'))
-
-			return this
 		} # }}}
-		line(...args) { # {{{
+		line(...args): this { # {{{
 			this.newLine().code(...args)
-
-			return this
 		} # }}}
 		newControl() { # {{{
 			if @line != null {
@@ -488,12 +458,12 @@ export {
 
 	class MarkWriter {
 		private {
-			_delta: Number		= 0
-			_indent: Number
-			_index: Number		= -1
-			_mark: MarkWriter?	= null
-			_relative: Boolean	= false
-			_writer
+			@delta: Number		= 0
+			@indent: Number
+			@index: Number		= -1
+			@mark: MarkWriter?	= null
+			@relative: Boolean	= false
+			@writer
 		}
 		public {
 			breakTerminator: Fragment
@@ -521,25 +491,21 @@ export {
 				return @index
 			}
 		} # }}}
-		line(...args) { # {{{
+		line(...args): this { # {{{
 			this.newLine().code(...args).done()
-
-			return this
 		} # }}}
 		mark() => new MarkWriter(this)
 		newControl() => new @writer.Control(this, @indent).init()
 		newFragment(...args) => @writer.newFragment(...args)
 		newIndent(indent) => @writer.newIndent(indent)
 		newLine() => new @writer.Line(this, @indent).init()
-		push(...args) { # {{{
+		push(...args): this { # {{{
 			if @relative {
 				@delta += @writer.insertAt(this.index(), ...args)
 			}
 			else {
 				@index += @writer.insertAt(@index, ...args)
 			}
-
-			return this
 		} # }}}
 	}
 }
