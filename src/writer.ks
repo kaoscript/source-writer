@@ -113,10 +113,10 @@ export {
 
 			return @cache.comment[indent].init()
 		} # }}}
-		newControl(indent = @indent, initiator = true, terminator = true) { # {{{
-			var key = `\(indent)|\(initiator)|\(terminator)`
+		newControl(indent = @indent, initiator = true, separator = true, terminator = true) { # {{{
+			var key = `\(indent)|\(initiator)|\(separator)|\(terminator)`
 
-			@cache.control[key] ??= new this.Control(this, indent, initiator, terminator)
+			@cache.control[key] ??= new this.Control(this, indent, initiator, separator, terminator)
 
 			return @cache.control[key].init()
 		} # }}}
@@ -259,8 +259,8 @@ export {
 		newBlock(indent = @indent + 1) { # {{{
 			return @writer.newBlock(indent, true)
 		} # }}}
-		newControl(indent = @indent + 1, initiator = true, terminator = true) { # {{{
-			return @writer.newControl(indent, initiator, terminator)
+		newControl(indent = @indent + 1, initiator = true, separator = true, terminator = true) { # {{{
+			return @writer.newControl(indent, initiator, separator, terminator)
 		} # }}}
 		newLine(indent = @indent + 1, initiator = true, terminator = true) { # {{{
 			return @writer.newLine(indent, initiator, terminator)
@@ -272,11 +272,12 @@ export {
 			@firstStep: Boolean			= true
 			@indent: Number
 			@initiator: Boolean
+			@separator: Boolean
 			@step
 			@terminator: Boolean
 			@writer
 		}
-		constructor(@writer, @indent, @initiator = true, @terminator = true)
+		constructor(@writer, @indent, @initiator = true, @separator = true, @terminator = true)
 		code(...args): this { # {{{
 			@step.code(...args)
 		} # }}}
@@ -307,7 +308,7 @@ export {
 				@step = @writer.newBlock(@indent)
 			}
 			else {
-				if @terminator {
+				if @separator {
 					@writer.push(@writer.newFragment('\n'))
 				}
 
@@ -365,8 +366,8 @@ export {
 		newBlock(indent = @indent) { # {{{
 			return @writer.newBlock(indent)
 		} # }}}
-		newControl(indent = @indent + 1, initiator = true, terminator = true) { # {{{
-			return @writer.newControl(indent, initiator, terminator)
+		newControl(indent = @indent + 1, initiator = true, separator = true, terminator = true) { # {{{
+			return @writer.newControl(indent, initiator, separator, terminator)
 		} # }}}
 		newIndent(indent = @indent + 1): this { # {{{
 			@writer.push(@writer.newIndent(indent))
@@ -400,8 +401,8 @@ export {
 				@notDone = false
 			}
 		} # }}}
-		newControl(indent = @indent, initiator = true, terminator = true) { # {{{
-			return @writer.newControl(indent, initiator, terminator)
+		newControl(indent = @indent, initiator = true, separator = true, terminator = true) { # {{{
+			return @writer.newControl(indent, initiator, separator, terminator)
 		} # }}}
 		newLine() => this
 	}
@@ -443,7 +444,7 @@ export {
 				@writer.push(@writer.newFragment('\n'))
 			}
 
-			return @line <- @writer.newControl(@indent + 1, true, false)
+			return @line <- @writer.newControl(@indent + 1, true, true, false)
 		} # }}}
 		newLine() { # {{{
 			if @line != null {
