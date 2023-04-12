@@ -95,53 +95,53 @@ export {
 		line(...args): this { # {{{
 			this.newLine(@indent).code(...args).done()
 		} # }}}
-		mark(indent = @indent) => new this.Mark(this, indent, @fragments.length)
+		mark(indent = @indent) => this.Mark.new(this, indent, @fragments.length)
 		newArray(indent = @indent) { # {{{
-			@cache.array[indent] ??= new this.Array(this, indent)
+			@cache.array[indent] ??= this.Array.new(this, indent)
 
 			return @cache.array[indent].init()
 		} # }}}
 		newBlock(indent = @indent, breakable = false) { # {{{
 			var key = `\(indent)|\(breakable)`
 
-			@cache.block[key] ??= new this.Block(this, indent, breakable)
+			@cache.block[key] ??= this.Block.new(this, indent, breakable)
 
 			return @cache.block[key].init()
 		} # }}}
 		newComment(indent = @indent) { # {{{
-			@cache.comment[indent] ??= new this.Comment(this, indent)
+			@cache.comment[indent] ??= this.Comment.new(this, indent)
 
 			return @cache.comment[indent].init()
 		} # }}}
 		newControl(indent = @indent, initiator = true, separator = true, terminator = true) { # {{{
 			var key = `\(indent)|\(initiator)|\(separator)|\(terminator)`
 
-			@cache.control[key] ??= new this.Control(this, indent, initiator, separator, terminator)
+			@cache.control[key] ??= this.Control.new(this, indent, initiator, separator, terminator)
 
 			return @cache.control[key].init()
 		} # }}}
 		newExpression(indent = @indent, initiator = true, terminator = true) { # {{{
 			var key = `\(indent)|\(initiator)|\(terminator)`
 
-			@cache.expression[key] ??= new this.Expression(this, indent, initiator, terminator)
+			@cache.expression[key] ??= this.Expression.new(this, indent, initiator, terminator)
 
 			return @cache.expression[key].init()
 		} # }}}
 		newFragment(...args) { # {{{
-			return new this.Fragment(...args)
+			return this.Fragment.new(...args)
 		} # }}}
 		newIndent(indent) { # {{{
-			return @cache.indent[indent] ?? (@cache.indent[indent] <- new this.Fragment('\t'.repeat(indent)))
+			return @cache.indent[indent] ?? (@cache.indent[indent] <- this.Fragment.new('\t'.repeat(indent)))
 		} # }}}
 		newLine(indent = @indent, initiator = true, terminator = true) { # {{{
 			var key = `\(indent)|\(initiator)|\(terminator)`
 
-			@cache.line[key] ??= new this.Line(this, indent, initiator, terminator)
+			@cache.line[key] ??= this.Line.new(this, indent, initiator, terminator)
 
 			return @cache.line[key].init()
 		} # }}}
 		newObject(indent = @indent) { # {{{
-			@cache.object[indent] ??= new this.Object(this, indent)
+			@cache.object[indent] ??= this.Object.new(this, indent)
 
 			return @cache.object[indent].init()
 		} # }}}
@@ -498,11 +498,11 @@ export {
 		line(...args): this { # {{{
 			this.newLine().code(...args).done()
 		} # }}}
-		mark() => new MarkWriter(this)
-		newControl() => new @writer.Control(this, @indent).init()
+		mark() => MarkWriter.new(this)
+		newControl() => @writer.Control.new(this, @indent).init()
 		newFragment(...args) => @writer.newFragment(...args)
 		newIndent(indent) => @writer.newIndent(indent)
-		newLine() => new @writer.Line(this, @indent).init()
+		newLine() => @writer.Line.new(this, @indent).init()
 		push(...args): this { # {{{
 			if @relative {
 				@delta += @writer.insertAt(this.index(), ...args)
