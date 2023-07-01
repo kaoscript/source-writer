@@ -7,7 +7,7 @@
  * Licensed under the MIT license.
  * http://www.opensource.org/licenses/mit-license.php
  **/
-include '@kaoscript/util'
+include 'npm:@kaoscript/util'
 
 enum BlockDelimiter {
 	CURLY_BRACKET
