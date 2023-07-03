@@ -343,7 +343,7 @@ class ExpressionWriter {
 	}
 	constructor(@writer, @indent, @initiator = true, @terminator = true)
 	code(...args): this { # {{{
-		for arg in args {
+		for var arg in args {
 			if arg is Array {
 				this.code(...arg)
 			}
