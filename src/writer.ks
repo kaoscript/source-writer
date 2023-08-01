@@ -234,9 +234,7 @@ class BlockWriter {
 		@notDone: Boolean		= true
 		@writer
 	}
-	// TODO!
-	// constructor(@writer, @indent, @breakable = false, @delimiter = .CURLY_BRACKET)
-	constructor(@writer, @indent, @breakable = false, @delimiter = BlockDelimiter.CURLY_BRACKET)
+	constructor(@writer, @indent, @breakable = false, @delimiter = .CURLY_BRACKET)
 	done() { # {{{
 		if @notDone {
 			@writer.push(@writer.newIndent(@indent), @writer.newFragment($blockDelimiters[@delimiter][1]))
