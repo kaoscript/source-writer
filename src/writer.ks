@@ -90,7 +90,7 @@ class Writer {
 		@lineTerminator = this.newFragment(`\(@options.terminators.line)\n`)
 		@listTerminator = this.newFragment(`\(@options.terminators.list)\n`)
 	} # }}}
-	comment(...args): this { # {{{
+	comment(...args): valueof this { # {{{
 		this.newComment(@indent).code(...args).done()
 	} # }}}
 	insertAt(index, ...args): Number { # {{{
@@ -101,7 +101,7 @@ class Writer {
 		return @fragments.length - l
 	} # }}}
 	length(): Number => @fragments.length
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		this.newLine(@indent).code(...args).done()
 	} # }}}
 	mark(indent = @indent) => this.Mark.new(this, indent, @fragments.length)
@@ -154,7 +154,7 @@ class Writer {
 
 		return @cache.object[indent].init()
 	} # }}}
-	push(...args): this { # {{{
+	push(...args): valueof this { # {{{
 		@fragments.push(...args)
 	} # }}}
 	toArray(): Fragment[] => @fragments
@@ -192,12 +192,12 @@ class ArrayWriter {
 			@writer.push(@writer.newFragment(']'))
 		}
 	} # }}}
-	private init(): this { # {{{
+	private init(): valueof this { # {{{
 		@line = null
 
 		@writer.push(@writer.newFragment('['))
 	} # }}}
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		this.newLine().code(...args)
 	} # }}}
 	newControl() { # {{{
@@ -251,7 +251,7 @@ class BlockWriter {
 			return false
 		}
 	} # }}}
-	private init(): this { # {{{
+	private init(): valueof this { # {{{
 		if @breakable {
 			@writer.push(@writer.newIndent(@indent), @writer.newFragment(`\($blockDelimiters[@delimiter][0])\n`))
 		}
@@ -262,7 +262,7 @@ class BlockWriter {
 		@notDone = true
 	} # }}}
 	length() => @writer.length()
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		@writer.newLine(@indent + 1).code(...args).done()
 	} # }}}
 	mark(indent = @indent + 1) => @writer.mark(indent)
@@ -288,7 +288,7 @@ class ControlWriter {
 		@writer
 	}
 	constructor(@writer, @indent, @initiator = true, @separator = true, @terminator = true)
-	code(...args): this { # {{{
+	code(...args): valueof this { # {{{
 		@step.code(...args)
 	} # }}}
 	done() { # {{{
@@ -297,12 +297,12 @@ class ControlWriter {
 		}
 	} # }}}
 	isFirstStep() => @firstStep
-	private init(): this { # {{{
+	private init(): valueof this { # {{{
 		@step = @writer.newExpression(@indent, @initiator)
 
 		@firstStep = true
 	} # }}}
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		@step.line(...args)
 	} # }}}
 	newControl() { # {{{
@@ -311,7 +311,10 @@ class ControlWriter {
 	newLine() { # {{{
 		return @step.newLine()
 	} # }}}
-	step(): this { # {{{
+	newObject() { # {{{
+		return @step.newObject()
+	} # }}}
+	step(): valueof this { # {{{
 		@step.done()
 
 		if @step is ExpressionWriter {
@@ -340,7 +343,7 @@ class ExpressionWriter {
 		@writer
 	}
 	constructor(@writer, @indent, @initiator = true, @terminator = true)
-	code(...args): this { # {{{
+	code(...args): valueof this { # {{{
 		for var arg in args {
 			if arg is Array {
 				this.code(...arg)
@@ -363,7 +366,7 @@ class ExpressionWriter {
 			return false
 		}
 	} # }}}
-	private init(): this { # {{{
+	private init(): valueof this { # {{{
 		if @initiator {
 			@writer.push(@writer.newIndent(@indent))
 		}
@@ -379,7 +382,7 @@ class ExpressionWriter {
 	newControl(indent = @indent + 1, initiator = true, separator = true, terminator = true) { # {{{
 		return @writer.newControl(indent, initiator, separator, terminator)
 	} # }}}
-	newIndent(indent = @indent + 1): this { # {{{
+	newIndent(indent = @indent + 1): valueof this { # {{{
 		@writer.push(@writer.newIndent(indent))
 	} # }}}
 	newLine(indent = @indent + 1) { # {{{
@@ -436,12 +439,12 @@ class ObjectWriter {
 			@writer.push(@writer.newFragment('}'))
 		}
 	} # }}}
-	private init(): this { # {{{
+	private init(): valueof this { # {{{
 		@line = null
 
 		@writer.push(@writer.newFragment('{'))
 	} # }}}
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		this.newLine().code(...args)
 	} # }}}
 	newControl() { # {{{
@@ -505,7 +508,7 @@ class MarkWriter {
 			return @index
 		}
 	} # }}}
-	line(...args): this { # {{{
+	line(...args): valueof this { # {{{
 		this.newLine().code(...args).done()
 	} # }}}
 	mark() => MarkWriter.new(this)
@@ -513,7 +516,7 @@ class MarkWriter {
 	newFragment(...args) => @writer.newFragment(...args)
 	newIndent(indent) => @writer.newIndent(indent)
 	newLine() => @writer.Line.new(this, @indent).init()
-	push(...args): this { # {{{
+	push(...args): valueof this { # {{{
 		if @relative {
 			@delta += @writer.insertAt(this.index(), ...args)
 		}
