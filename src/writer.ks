@@ -380,6 +380,7 @@ export namespace SourceGeneration {
 		newBlock(indent = @indent, delimiter: BlockDelimiter? = null) { # {{{
 			return @writer.newBlock(indent, null, delimiter)
 		} # }}}
+		mark(indent = @indent) => @writer.mark(indent).newExpression()
 		newControl(indent = @indent + 1, initiator = true, separator = true, terminator = true) { # {{{
 			return @writer.newControl(indent, initiator, separator, terminator)
 		} # }}}
@@ -406,6 +407,9 @@ export namespace SourceGeneration {
 	}
 
 	export class LineWriter extends ExpressionWriter {
+		private {
+			@limit: Boolean		= true
+		}
 		done() { # {{{
 			if @notDone {
 				if @terminator {
@@ -418,7 +422,19 @@ export namespace SourceGeneration {
 		newControl(indent = @indent, initiator = true, separator = true, terminator = true) { # {{{
 			return @writer.newControl(indent, initiator, separator, terminator)
 		} # }}}
-		newLine() => this
+		newLine() { # {{{
+			if @limit {
+				return this
+			}
+			else {
+				return @writer.newLine(@indent, false, false)
+			}
+		} # }}}
+		unlimit() { # {{{
+			@limit = false
+
+			return this
+		} # }}}
 	}
 
 	export class ObjectWriter {
@@ -513,10 +529,20 @@ export namespace SourceGeneration {
 			this.newLine().code(...args).done()
 		} # }}}
 		mark() => MarkWriter.new(this)
-		newControl() => @writer.Control.new(this, @indent).init()
+		newBlock(indent = @indent, breakable: Boolean? = null, delimiter: BlockDelimiter? = null) { # {{{
+			return @writer.Block.new(this, indent, breakable, delimiter).init()
+		} # }}}
+		newControl(indent = @indent + 1, initiator? = null, separator? = null, terminator? = null) { # {{{
+			return @writer.Control.new(this, indent, initiator, terminator).init()
+		} # }}}
+		newExpression(indent = @indent, initiator? = null, terminator? = null) { # {{{
+			return @writer.Expression.new(this, indent, initiator, terminator)
+		} # }}}
 		newFragment(...args) => @writer.newFragment(...args)
 		newIndent(indent) => @writer.newIndent(indent)
-		newLine() => @writer.Line.new(this, @indent).init()
+		newLine(indent = @indent, initiator? = null, terminator? = null) { # {{{
+			return @writer.Line.new(this, indent, initiator, terminator).init()
+		} # }}}
 		push(...args): valueof this { # {{{
 			if @relative {
 				@delta += @writer.insertAt(this.index(), ...args)
